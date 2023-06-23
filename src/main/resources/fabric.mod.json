@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "id": "anviltweaks",
+  "version": "${version}",
+  "name": "Anviltweaks",
+  "description": "",
+  "authors": [],
+  "contact": {},
+  "license": "MIT",
+  "icon": "assets/anviltweaks/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "jobieskii.anviltweaks.AnvilTweaks"
+    ]
+  },
+  "mixins": [
+    "anviltweaks.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.14.14",
+    "fabric": "*",
+    "minecraft": "1.19.3"
+  }
+}
