@@ -1,6 +1,7 @@
 package jobieskii.anviltweaks.mixin;
 
 import com.llamalad7.mixinextras.sugar.Local;
+import com.llamalad7.mixinextras.sugar.ref.LocalBooleanRef;
 import com.llamalad7.mixinextras.sugar.ref.LocalIntRef;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.screen.AnvilScreenHandler;
@@ -52,15 +53,31 @@ public class AnvilContainerMixin {
         else
             return Integer.MAX_VALUE;
     }
-    // Make cost of enchantment exponential based on level
+    // Make cost of enchantment linear based on level and negate effects of enchantment rarity on cost
     @Inject(
             method = "updateResult",
             at = @At(target = "Ljava/util/Map;put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", value = "INVOKE", shift = At.Shift.AFTER)
     )
-    public void updateR(CallbackInfo ci, @Local(ordinal=4) LocalIntRef r, @Local Enchantment enchantment) {
+    public void updateR(CallbackInfo ci, @Local(ordinal=4) LocalIntRef r, @Local Enchantment enchantment, @Local(ordinal=0) LocalBooleanRef bl) {
         int k = r.get() - enchantment.getMaxLevel();
         if (k > 0) {
-            r.set(37 + (6 * k));
+            int s = 1;
+            switch (enchantment.getRarity()) {
+                case COMMON:
+                    s = 1;
+                    break;
+                case UNCOMMON:
+                    s = 2;
+                    break;
+                case RARE:
+                    s = 4;
+                    break;
+                case VERY_RARE:
+                    s = 8;
+            }
+            if (bl.get()) s = Math.max(1, s / 2);
+
+            r.set((37 + (6 * k))/s);
         }
     }
     // stop increasing repair cost
