@@ -1,17 +1,13 @@
 package jobieskii.anviltweaks.mixin;
 
+import com.llamalad7.mixinextras.sugar.Local;
+import com.llamalad7.mixinextras.sugar.ref.LocalIntRef;
 import net.minecraft.enchantment.Enchantment;
-import net.minecraft.item.ItemStack;
 import net.minecraft.screen.AnvilScreenHandler;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.*;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
-
-import java.util.Iterator;
-import java.util.Locale;
-import java.util.Map;
 
 @Mixin(AnvilScreenHandler.class)
 public class AnvilContainerMixin {
@@ -45,31 +41,28 @@ public class AnvilContainerMixin {
         return 2;
     }
 
-    // stop increasing enchantment level when at getMaxLevel()
-    @Inject(
-            method = "updateResult",
-            at = @At(
-                    target = "Ljava/util/Map;put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
-                    value = "INVOKE"
-            ),
-            locals = LocalCapture.CAPTURE_FAILEXCEPTION
-    )
-    public void inject(CallbackInfo ci, ItemStack itemStack, int i, int j, int k, ItemStack itemStack2, ItemStack itemStack3, Map map, boolean bl, Map map2, boolean bl2, boolean bl3, Iterator var12, Enchantment enchantment, int q, int r) {
-        r = ((Integer) map2.get(enchantment)).intValue();
-        r = q == r && r < enchantment.getMaxLevel() ? r + 1 : Math.max(r, q);
-        map.put(enchantment, r);
-    }
+    // Allow increasing enchantment level above maxLevel
     @Redirect(
             method = "updateResult",
-            at = @At(
-                    target = "Ljava/util/Map;put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
-                    value = "INVOKE"
-            )
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/enchantment/Enchantment;getMaxLevel()I", ordinal = 0)
     )
-    public Object ignore(Map instance, Object k, Object v) {
-        return null;
+    public int maxLevel(Enchantment instance) {
+        if (instance.getMaxLevel() == 1)
+            return 1;
+        else
+            return Integer.MAX_VALUE;
     }
-
+    // Make cost of enchantment exponential based on level
+    @Inject(
+            method = "updateResult",
+            at = @At(target = "Ljava/util/Map;put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", value = "INVOKE", shift = At.Shift.AFTER)
+    )
+    public void updateR(CallbackInfo ci, @Local(ordinal=4) LocalIntRef r, @Local Enchantment enchantment) {
+        int k = r.get() - enchantment.getMaxLevel();
+        if (k > 0) {
+            r.set(37 + (6 * k));
+        }
+    }
     // stop increasing repair cost
     @Inject(
             method = "getNextCost",

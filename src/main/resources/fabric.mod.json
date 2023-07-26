@@ -12,6 +12,9 @@
   "entrypoints": {
     "main": [
       "jobieskii.anviltweaks.AnvilTweaks"
+    ],
+    "preLaunch": [
+      "jobieskii.anviltweaks.PreLaunchAnvilTweaks"
     ]
   },
   "mixins": [
